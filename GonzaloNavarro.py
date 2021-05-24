@@ -1,13 +1,15 @@
 import itertools
+import sys
+
 import gfapy
 
 
 # Node of a graph
 class Node:
-    # list of predecessor nodes
-    e = []
-    # list of successor nodes
-    succ = []
+    # list of in nodes
+    in_nodes = []
+    # list of out nodes
+    out_nodes = []
     # name - number
     name = ''
     # C value
@@ -24,18 +26,18 @@ class Node:
     def __init__(self, name, data):
         self.name = name
         self.data = data
-        self.succ = []
-        self.e = []
+        self.out_nodes = []
+        self.in_nodes = []
         self.c1 = 0
         self.c2 = 0
         self.split = False
         self.split_list = []
 
-    def set_e(self, value):
-        self.e.append(value)
+    def set_in_nodes(self, value):
+        self.in_nodes.append(value)
 
-    def set_succ(self, value):
-        self.succ.append(value)
+    def set_out_nodes(self, value):
+        self.out_nodes.append(value)
 
     def set_name(self, value):
         self.name = value
@@ -58,8 +60,11 @@ class Node:
     def get_c2(self):
         return self.c2
 
-    def get_e(self):
-        return self.e
+    def get_in_nodes(self):
+        return self.in_nodes
+
+    def get_out_nodes(self):
+        return self.out_nodes
 
     def get_data(self):
         return self.data
@@ -73,15 +78,29 @@ class Node:
     def get_split_list(self):
         return self.split_list
 
-    def __str__(self):
+    def structure_print(self):
+        output_str = '[NODE]=('
+        output_str += self.name + ') '
+        output_str += '[OUT:]'
 
-        output_str = self.name
-        output_str += '-->'
-        for x in self.succ:
+        for x in self.out_nodes:
             output_str += ";" + str(x)
 
-        return output_str
+        output_str += ' [IN:]'
 
+        for x in self.in_nodes:
+            output_str += ";" + str(x)
+
+        print(output_str)
+
+        return
+
+    def C_values_print(self):
+        print('C = ' + str(self.c1))
+        return
+
+    def __str__(self):
+        return self.name
 
 def gfa():
     # nikaj to ipak...
@@ -117,27 +136,37 @@ def process_data():
                     link[atr[1]].append(atr[3])
             else:
                 link[atr[1]] = [atr[3]]
-    print(link)
+    # print(link)
 
     for k, v in link.items():
         # splitanje oblika 1 -> [
         for value in v:
-            graph[int(k) - 1].set_succ(value)
-            n = graph[int(k) - 1]
-            print(n)
+            graph[int(value) - 1].set_in_nodes(graph[int(k)-1])
+            graph[int(k) - 1].set_out_nodes(graph[int(value)-1])
 
-    return graph, 'bbbb'
+        # n = graph[int(k) - 1]
+        # n.structure_print()
+
+    return graph, 'A'
 
 
 # g(v,i) function
-def g(v, i, patt):
+def g(v, i, patt, graph):
     # find min Cu/(u,v)
-    minimal = v.get_e()[0].get_c1()
-    for x in v.get_e():
-        if x.get_c1() > minimal:
-            minimal = x
+    v_in_nodes = graph[v].get_in_nodes()
 
-    if patt[i] == v.get_data():
+    if v_in_nodes:
+        minimal = graph[v_in_nodes[0]].get_c1()
+
+        for x in v_in_nodes:
+            if x.get_c1() < minimal:
+                minimal = x
+
+    # if v has no in_nodes minimal = MAX -> e.g. starting nodes
+    else:
+        minimal = sys.float_info.max
+
+    if patt[i-1] == v.get_data():
         return min(minimal, i - 1)
 
     else:
@@ -150,23 +179,23 @@ def propagate(v, u):
     if v.get_c1() > 1 + u.get_c1():
         v.set_c1(1 + u.get_c1())
         # propagate error
-        for z in v.get_succ():
+        for z in v.get_out_nodes():
             propagate(v, z)
 
 
 # approximate string(pattern) matching on hypertext(graph)
 def Search(graph, patt):
-    m = len(patt)
+    m = len(patt) + 1
     i = 1
     while i < m:
         for v in graph:
-            v.set_c2(g(v, i, patt))
+            v.set_c2(g(v, i, patt, graph))
         for v in graph:
             v.set_c1(v.get_c2())
 
         # for all (u, v) e E, Propagate (u,v)
         for v in graph:
-            for V, u in itertools.product(v, v.get_e()):
+            for V, u in itertools.product(v, v.get_in_nodes()):
                 propagate(V, u)
         i += 1
 
@@ -178,9 +207,11 @@ def main():
 
     graph, patt = process_data()
 
+    Search(graph, patt)
+
     for ggg in graph:
-        print(ggg)
-        print()
+        ggg.structure_print()
+        ggg.C_values_print()
     # gfa()
     # Search(graph, patt)
 
