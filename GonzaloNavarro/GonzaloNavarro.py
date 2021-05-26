@@ -2,29 +2,11 @@ import argparse
 import itertools
 import sys
 import os
+import numpy as np
 
 
 # Node of a graph
 class Node:
-    # list of in nodes
-    in_nodes = []
-    # list of out nodes
-    out_nodes = []
-    # id - number
-    node_id = 0
-    # original id in gfa file - number
-    original_node_id = 0
-    # C value
-    c1 = 0
-    # C' value
-    c2 = 0
-    # char data of a node
-    sequence = ''
-    # not_reversed = boolean
-    reversed = True
-    # split_list -> if len(data) > 1 -> split string into nodes
-    split_list = []
-
     def __init__(self, node_id, original_node_id, is_reversed, sequence):
         self.node_id = node_id
         self.sequence = sequence
@@ -48,8 +30,8 @@ class FastQ:
 class AlignmentGraph:
     def __init__(self):
         self.nodeStart = []
-        self.nodeOffset = []
-        self.nodeIDs = []
+        #self.nodeOffset = []
+        #self.nodeIDs = []
         self.nodeLookup = {}
         self.inNeighbors = []
         self.outNeighbors = []
@@ -59,6 +41,16 @@ class AlignmentGraph:
         self.nodeSequences = []
         self.overlap = 0
         self.max_node_size = 100
+
+    def pretvori_u_numpy(self):
+        self.nodeStart = np.array(self.nodeStart)
+        self.nodeSequences = np.array(self.nodeSequences)
+        self.nodeLookup = np.array(self.nodeLookup)
+        self.inNeighbors = np.array(self.inNeighbors)
+        self.outNeighbors = np.array(self.outNeighbors)
+        self.reverse = np.array(self.reverse)
+
+
 
     def node_len(self):
         return len(self.nodeStart)
@@ -92,10 +84,10 @@ class AlignmentGraph:
         if node_id not in self.nodeLookup.keys():
             self.nodeLookup[node_id] = []
         self.nodeLookup[node_id].append(len(self.nodeStart))
-        self.nodeIDs.append(node_id)
+        #self.nodeIDs.append(node_id)
         self.nodeStart.append(len(self.nodeSequences))
         self.reverse.append(reversed)
-        self.nodeOffset.append(offset)
+        #self.nodeOffset.append(offset)
         self.inNeighbors.append([])
         self.outNeighbors.append([])
         for c in sequence:
@@ -151,7 +143,6 @@ class AlignmentGraph:
         indexnum += 1
         S.append(node)
         onStack[node] = True
-        #print(node)
         for neighbor in self.inNeighbors[node]:
             if index[neighbor] == -1:
                 self.connect(neighbor, result, indexnum, index, lowlink, onStack, S)
@@ -162,7 +153,7 @@ class AlignmentGraph:
         if lowlink[node] == index[node]:
             result.append([])
             while True:
-                #sve koje si do tad dodao na stog nakon izvornog node-a stavi u result[-1]
+                #sve koje si do tad dodao na stog nakon izvornog node-a stavi u result[ZZ]
                 w = S.pop()
                 onStack[w] = False
                 result[-1].append(w)
@@ -241,7 +232,7 @@ def load_graph(filepath):
 
     for line in all_lines:
         if line[0] == 'L':
-            first, second = create_edges(line)
+            first, second = create_edges(line.strip())
             graph.add_edge(first)
             graph.add_edge(second)
 
@@ -298,14 +289,14 @@ class Aligner:
         start = self.graph.node_start_in_seq(node)
         end = self.graph.node_end_in_seq(node)
         current_slice[start] = previous_slice[start] + 1
-        char_in_graph = self.graph.get_sequence_char(start)
+        char_in_graph = self.graph.nodeSequences[start]
         match = char_in_graph == pattern[j]
         for neighbor in self.graph.inNeighbors[node]:
             u = self.graph.node_end_in_seq(neighbor) - 1  # indeks zadnjeg znaka u susjedu
             current_slice[start] = min(current_slice[start], current_slice[u] + 1,
                                        previous_slice[u] + (0 if match else 1))
         for w in range(start + 1, end):
-            char_in_graph = self.graph.get_sequence_char(w)
+            char_in_graph = self.graph.nodeSequences[w]
             match = char_in_graph == pattern[j]
             current_slice[w] = min(current_slice[w - 1] + 1, previous_slice[w] + 1,
                                    previous_slice[w - 1] + (0 if match else 1))
@@ -341,8 +332,8 @@ class Aligner:
 
     # approximate string(pattern) matching on hypertext(graph)
     def align(self, pattern):
-        current_slice = self.graph.sequence_len() * [0]
-        previous_slice = self.graph.sequence_len() * [0]
+        current_slice = np.zeros(self.graph.sequence_len(), dtype=int)
+        previous_slice = np.zeros(self.graph.sequence_len(), dtype=int)
 
         # inicijalizacija previous_slicea
         for w in range(len(previous_slice)):
@@ -354,6 +345,8 @@ class Aligner:
                 self.calculate_acyclic(current_slice, previous_slice, pattern, j, self.component_order[i][0])
 
             current_slice, previous_slice = previous_slice, current_slice
+            #if j % 100 == 99:
+                #print(j)
 
         najmanji = sys.maxsize
 
@@ -404,14 +397,13 @@ def main():
     parser.add_argument(
         '-g',
         help='Ime datoteke grafa',
-        default='ref10000_tangle.gfa',
+        default='ref10000_linear.gfa',
         choices=['ref10000_linear.gfa', 'ref10000_snp.gfa', 'ref10000_twopath.gfa', 'ref10000_onechar.gfa',
                  'ref10000_tangle.gfa']
     )
 
     args = parser.parse_args()
     current_dir = os.getcwd()
-    sys.setrecursionlimit(30000)
 
     fastqfile = os.path.join(current_dir, 'tmp', args.f)
     graphfile = os.path.join(current_dir, 'tmp', args.g)
@@ -421,6 +413,7 @@ def main():
     alignmentGraph = load_graph(graphfile)
     fastqs = load_fastq(fastqfile)
     bit_parallel_scores = load_scores(bit_parallel_file)
+    alignmentGraph.pretvori_u_numpy()
 
     componentOrder = alignmentGraph.topological_order_of_components()
     first, second = componentOrder  # result, belongsToCOmponent
@@ -455,6 +448,7 @@ def main():
     aligner = Aligner(graph=alignmentGraph, component_order=first, belongs_to_component=second)
     scores = []
     for fastq in fastqs:
+        fastq.sequence = np.array(list(fastq.sequence))
         score = 0
         if isAcyclic:
             score = aligner.align(pattern=fastq.sequence)
@@ -472,5 +466,6 @@ def main():
             correct_len += 1
 
     print(f"{correct_len}/{len(scores)}")
+
 
 main()
