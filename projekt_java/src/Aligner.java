@@ -13,18 +13,19 @@ public class Aligner {
         this.belongsToComponent = belongsToComponent;
     }
 
-    public int align(String sequence) {
+    public int align(String pattern) {
         List<Integer> current_slice = new ArrayList<>(Collections.nCopies(graph.graphSequence.size(), 0));
         List<Integer> previous_slice = new ArrayList<>(Collections.nCopies(graph.graphSequence.size(), 0));
 
+
         for (int w = 0; w < previous_slice.size(); w++) {
             char char_in_graph = graph.graphSequence.get(w);
-            previous_slice.set(w, sequence.charAt(0) == char_in_graph ? 0 : 1);
+            previous_slice.set(w, pattern.charAt(0) == char_in_graph ? 0 : 1);
         }
 
-        for (int j = 1; j < sequence.length(); j++) {
-            for (int i = 0; i < componentOrder.size(); i++) {
-                this.calculateAcyclic(current_slice, previous_slice, sequence, j, componentOrder.get(i).get(0));
+        for (int j = 1; j < pattern.length(); j++) {
+            for (int i = 0; i < graph.nodeIndexInGraphSequence.size(); i++) {
+                this.calculateAcyclic(current_slice, previous_slice, pattern, j, i);
             }
             List<Integer> tmp = current_slice;
             current_slice = previous_slice;
@@ -39,13 +40,13 @@ public class Aligner {
         return smallest;
     }
 
-    private void calculateAcyclic(List<Integer> current_slice, List<Integer> previous_slice, String sequence, int j, Integer node) {
+    private void calculateAcyclic(List<Integer> current_slice, List<Integer> previous_slice, String pattern, int j, Integer node) {
         int start = graph.getNodeStartInSequence(node);
         int end = graph.getNodeEndInSequence(node);
         current_slice.set(start, previous_slice.
                 get(start) + 1);
         char charInGraph = graph.graphSequence.get(start);
-        boolean same = charInGraph == sequence.charAt(j);
+        boolean same = charInGraph == pattern.charAt(j);
         for (int neighbor : graph.inNeighbors.get(node)) {
             int lastInNeighborIndex = graph.getNodeEndInSequence(neighbor) - 1;
             current_slice.set(start, Math.min(current_slice.get(start),
@@ -54,24 +55,27 @@ public class Aligner {
         }
         for (int c = start + 1; c < end; c++) {
             charInGraph = graph.graphSequence.get(c);
-            same = charInGraph == sequence.charAt(j);
+            same = charInGraph == pattern.charAt(j);
             current_slice.set(c, Math.min(current_slice.get(c - 1) + 1,
                     Math.min(previous_slice.get(c) + 1, previous_slice.get(c - 1) + (same ? 0 : 1))));
         }
     }
 
-    public int alignCyclic(String sequence) {
+    public int alignCyclic(String pattern) {
         List<Integer> currentSlice = new ArrayList<>(Collections.nCopies(graph.graphSequence.size(), 0));
         List<Integer> previousSlice = new ArrayList<>(Collections.nCopies(graph.graphSequence.size(), 0));
 
+        /*
         for (int w = 0; w < previousSlice.size(); w++) {
             char char_in_graph = graph.graphSequence.get(w);
             previousSlice.set(w, sequence.charAt(0) == char_in_graph ? 0 : 1);
+            //previousSlice.set(w, sequence.charAt(0) == char_in_graph ? 0 : 1);
         }
+         */
 
-        for (int j = 1; j < sequence.length(); j++) {
+        for (int j = 1; j < pattern.length(); j++) {
             for (int i = 0; i < currentSlice.size(); i++)
-                currentSlice.set(i, sequence.length());
+                currentSlice.set(i, pattern.length());
 
             for (var component : componentOrder) {
                 if (component.size() == 1) {
@@ -83,11 +87,11 @@ public class Aligner {
                         }
                     }
                     if (isAcyclic) {
-                        calculateAcyclic(currentSlice, previousSlice, sequence, j, component.get(0));
+                        calculateAcyclic(currentSlice, previousSlice, pattern, j, component.get(0));
                         continue;
                     }
                 }
-                this.calculateCyclic(sequence, component, currentSlice, previousSlice, j);
+                this.calculateCyclic(pattern, component, currentSlice, previousSlice, j);
             }
             List<Integer> tmp = currentSlice;
             currentSlice = previousSlice;
@@ -101,9 +105,9 @@ public class Aligner {
         return smallest;
     }
 
-    private void calculateCyclic(String sequence, List<Integer> nodes, List<Integer> currentSlice, List<Integer> previousSlice, int j) {
+    private void calculateCyclic(String pattern, List<Integer> nodes, List<Integer> currentSlice, List<Integer> previousSlice, int j) {
         for (int node : nodes) {
-            calculateAcyclic(currentSlice, previousSlice, sequence, j, node);
+            calculateAcyclic(currentSlice, previousSlice, pattern, j, node);
         }
 
         for (int node : nodes) {

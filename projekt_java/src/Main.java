@@ -16,8 +16,11 @@ public class Main {
         Graph graph = Utility.readGraph(Path.of("graphs/"+graphName));
         List<FastQ> fastqs = Utility.readFastq(Path.of("graphs/"+fastqName));
         List<Integer> bit_parallel_scores = Utility.loadScores(bit_parallel_file);
-        List<List<Integer>> componentOrder = graph.topologicalOrderOfComponents();
 
+        List<Integer> topologicalOrder = graph.topologicalOrderOfNodes();
+
+
+        List<List<Integer>>componentOrder = new ArrayList<>();
         List<Integer> belongsToComponent = new ArrayList<>(Collections.nCopies(graph.nodeIndexInGraphSequence.size(), -1));
         for (int component = 0; component < componentOrder.size(); component++) {
             assert componentOrder.get(component).size() > 0;
@@ -33,10 +36,15 @@ public class Main {
             }
         }
 
+
+
+        Aligner2 aligner2 = new Aligner2(graph, topologicalOrder);
         Aligner aligner = new Aligner(graph, componentOrder, belongsToComponent);
+
 
         boolean isAcyclic = true;
         boolean isTree = true;
+
         for (int i = 0; i < componentOrder.size(); i++)
         {
             if (componentOrder.get(i).size() > 1)
@@ -82,13 +90,16 @@ public class Main {
             System.out.println("The graph is cyclic");
         }
 
+
+
         List<Integer> scores = new ArrayList<>();
         for (FastQ fastq : fastqs) {
             int score = 0;
             if (isAcyclic) {
-                score = aligner.align(fastq.sequence);
+                score = aligner2.align(fastq.sequence);
             } else
-                score = aligner.alignCyclic(fastq.sequence);
+                //score = aligner.alignCyclic(fastq.sequence);
+                score = 1;
             System.out.println(score);
             scores.add(score);
         }

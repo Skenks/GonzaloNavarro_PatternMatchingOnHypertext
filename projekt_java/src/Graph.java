@@ -17,6 +17,7 @@ public class Graph {
     List<List<Integer>> outNeighbors = new ArrayList<>();
     List<Boolean> reverse = new ArrayList<>();
     int indexnum;
+    boolean hasCycle = false;
 
     public int getNodeStartInSequence(int node) {
         return nodeIndexInGraphSequence.get(node);
@@ -43,6 +44,7 @@ public class Graph {
      */
     public void addNode(Node node) {
         int i = 0;
+        /*
         while (i < node.sequence.length()) {
             char[] sequenceToAdd;
             try {
@@ -69,7 +71,21 @@ public class Graph {
             }
             i += MAX_NODE_SIZE;
         }
+
+         */
+        if (!splitNodesMap.containsKey(node.getId()))
+            splitNodesMap.put(node.getId(), new ArrayList<>());
+        splitNodesMap.get(node.getId()).add(nodeIndexInGraphSequence.size());
+        nodeIndexInGraphSequence.add(graphSequence.size());
+        inNeighbors.add(new ArrayList<>());
+        outNeighbors.add(new ArrayList<>());
+        reverse.add(node.isReversed());
+
+        for (char c : node.sequence.toCharArray()) {
+            graphSequence.add(c);
+        }
     }
+
 
     public void createAndAddEdges(String line) {
         String[] arr = line.split("\t");
@@ -145,8 +161,8 @@ public class Graph {
         indexnum = 0;
         List<List<Integer>> result = new ArrayList<>();
         for(int i = 0; i < nodeIndexInGraphSequence.size(); i++) {
-            if (index.get(i) == -1)
-                connect(i, result, index, lowlink, onStack, S);
+            //if (index.get(i) == -1)
+                //connect(i, result, index, lowlink, onStack, S);
         }
         Collections.reverse(result);
 
@@ -187,5 +203,46 @@ public class Graph {
         }
 
 
+    }
+
+    /**
+     * Kahn's algorithm (1962.)
+     * @return
+     */
+    public List<Integer> topologicalOrderOfNodes() {
+        //Empty list that will contain the sorted elements
+        List<Integer> L = new ArrayList<>();
+        // Set of all nodes with no incoming edge
+        List<Integer> S = new ArrayList<>();
+        List<List<Integer>> inNeighborsCopy = Utility.copyNeighbors(inNeighbors);
+        List<List<Integer>> outNeighborsCopy = Utility.copyNeighbors(outNeighbors);
+        //find nodes with no incoming edge
+        for(int i = 0; i < inNeighbors.size(); i++) {
+            if(inNeighbors.get(i).size() == 0)
+                S.add(i);
+        }
+
+        while(!S.isEmpty()) {
+            int n = S.get(0);
+            S.remove(0);
+            L.add(n);
+            List<Integer> inNeighborsToRemove = new ArrayList<>();
+            List<Integer> outNeighborsToRemove = new ArrayList<>();
+            for (int m : outNeighbors.get(n)) {
+                outNeighborsCopy.get(n).remove(Integer.valueOf(m));
+                inNeighborsCopy.get(m).remove(Integer.valueOf(n));
+                if (inNeighborsCopy.get(m).isEmpty())
+                    S.add(m);
+            }
+        }
+
+        for (List<Integer> neighbors : inNeighborsCopy) {
+            if (!neighbors.isEmpty()) {
+                //(graph has at least one cycle)
+                hasCycle = true;
+            }
+        }
+        //(a topologically sorted order)
+        return L;
     }
 }

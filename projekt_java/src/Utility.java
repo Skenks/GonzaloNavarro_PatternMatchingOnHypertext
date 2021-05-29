@@ -2,7 +2,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Utility {
 
@@ -121,4 +123,11 @@ public class Utility {
         return sb.toString();
     }
 
+    public static List<List<Integer>> copyNeighbors(List<List<Integer>> neighbors) {
+        List<List<Integer>> newList = new ArrayList<>();
+        for (List<Integer> nodeNeighbors : neighbors) {
+            newList.add(new ArrayList<>(nodeNeighbors));
+        }
+        return newList;
+    }
 }
