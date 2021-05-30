@@ -2,7 +2,7 @@ import argparse
 import itertools
 import sys
 import os
-import numpy as np
+import numpy
 
 
 # Node of a graph
@@ -143,7 +143,7 @@ class AlignmentGraph:
         indexnum += 1
         S.append(node)
         onStack[node] = True
-        for neighbor in self.inNeighbors[node]:
+        for neighbor in self.outNeighbors[node]:
             if index[neighbor] == -1:
                 self.connect(neighbor, result, indexnum, index, lowlink, onStack, S)
                 lowlink[node] = min(lowlink[neighbor], lowlink[node])
@@ -285,6 +285,7 @@ class Aligner:
         self.belongs_to_component = belongs_to_component
         self.component_order = component_order
 
+    @profile
     def calculate_acyclic(self, current_slice, previous_slice, pattern, j, node):
         start = self.graph.node_start_in_seq(node)
         end = self.graph.node_end_in_seq(node)
@@ -331,6 +332,7 @@ class Aligner:
                     self.recurse_horizontal_scores(current_slice, neighbor, u, new_score)
 
     # approximate string(pattern) matching on hypertext(graph)
+    @profile
     def align(self, pattern):
         current_slice = np.zeros(self.graph.sequence_len(), dtype=int)
         previous_slice = np.zeros(self.graph.sequence_len(), dtype=int)
@@ -355,6 +357,7 @@ class Aligner:
 
         return najmanji
 
+    @profile
     def align_cyclic(self, pattern):
         current_slice = self.graph.sequence_len() * [0]
         previous_slice = self.graph.sequence_len() * [0]
@@ -397,7 +400,7 @@ def main():
     parser.add_argument(
         '-g',
         help='Ime datoteke grafa',
-        default='ref10000_linear.gfa',
+        default='ref10000_tangle.gfa',
         choices=['ref10000_linear.gfa', 'ref10000_snp.gfa', 'ref10000_twopath.gfa', 'ref10000_onechar.gfa',
                  'ref10000_tangle.gfa']
     )
