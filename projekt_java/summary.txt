@@ -1,0 +1,24 @@
+ref10000_linear.gfa:
+score: 77/77
+bit-parallel took 3.178592 s
+Navarro took 106.0164537 s
+ratio: 33.3532751922864
+ref10000_snp.gfa:
+score: 77/77
+bit-parallel took 6.060904 s
+Navarro took 172.7205961 s
+ratio: 28.497497419526855
+ref10000_tangle.gfa:
+score: 77/77
+bit-parallel took 32.87267 s
+Navarro took 95.7473231 s
+ratio: 2.9126725361827925
+ref10000_twopath.gfa:
+score: 77/77
+bit-parallel took 52.625007 s
+Navarro took 909.4605783 s
+ratio: 17.28190892782209
+Total:
+bit-parallel took 94.737173 s
+Navarro took 1283 s
+ratio: 13.542730476029721

@@ -1,92 +1,64 @@
 import java.util.*;
 
-import static java.util.logging.Logger.global;
-
 public class Graph {
 
-    private final static int MAX_NODE_SIZE = 100;
-
-    //nodeLookup
-    private Map<Integer, List<Integer>> splitNodesMap = new HashMap<Integer, List<Integer>>();
-    private int overlap;
+    int overlap;
     List<Character> graphSequence = new ArrayList<>();
-    //koristimo isti node size kako bi se
-    //nodeStart
+    Map<Integer, Integer> nodesMap = new HashMap<>();
     List<Integer> nodeIndexInGraphSequence = new ArrayList<>();
     List<List<Integer>> inNeighbors = new ArrayList<>();
     List<List<Integer>> outNeighbors = new ArrayList<>();
-    List<Boolean> reverse = new ArrayList<>();
-    int indexnum;
-    boolean hasCycle = false;
 
+    /**
+     * Returns index of node start in graph sequence.
+     * @param node
+     * @return
+     */
     public int getNodeStartInSequence(int node) {
         return nodeIndexInGraphSequence.get(node);
     }
 
+    /**
+     * Returns index of (node end + 1) in graph sequence.
+     * @param node
+     * @return
+     */
     public int getNodeEndInSequence(int node) {
-        if (node == this.nodeIndexInGraphSequence.size()-1)
+        if (node == this.nodeIndexInGraphSequence.size() - 1)
             return this.graphSequence.size();
-        return nodeIndexInGraphSequence.get(node+1);
-    }
-
-    public int getOverlap() {
-        return overlap;
-    }
-
-    public void setOverlap(int overlap) {
-        this.overlap = overlap;
+        return nodeIndexInGraphSequence.get(node + 1);
     }
 
     /**
-     * Cijepa node ako je potrebno na manje dijelove (npr. za linear graf) i dodaje ih u graf.
-     *
+     * Returns number of nodes in graph.
+     * @return
+     */
+    public int getNumberOfNodesInGraph() {
+        return nodeIndexInGraphSequence.size();
+    }
+
+
+    /**
+     * Adds node in graph (adds sequence of node in graphSequence and adds start of node in list of node starts)
+     * and does necessary work (reserve space for neighbors)
      * @param node
      */
     public void addNode(Node node) {
-        int i = 0;
-        /*
-        while (i < node.sequence.length()) {
-            char[] sequenceToAdd;
-            try {
-                sequenceToAdd = node.sequence.substring(i, i + MAX_NODE_SIZE).toCharArray();
-            } catch (StringIndexOutOfBoundsException e) {
-                sequenceToAdd = node.sequence.substring(i).toCharArray();
-            }
-            if (!splitNodesMap.containsKey(node.getId()))
-                splitNodesMap.put(node.getId(), new ArrayList<>());
-            splitNodesMap.get(node.getId()).add(nodeIndexInGraphSequence.size());
-            nodeIndexInGraphSequence.add(graphSequence.size());
-            inNeighbors.add(new ArrayList<>());
-            outNeighbors.add(new ArrayList<>());
-            reverse.add(node.isReversed());
-
-            for (char c : sequenceToAdd) {
-                graphSequence.add(c);
-            }
-
-            if (i > 0) { //if the node is split
-                //add neighbor edges between split nodes - edge going out of second last into last
-                outNeighbors.get(outNeighbors.size() - 2).add(outNeighbors.size() - 1);
-                inNeighbors.get(inNeighbors.size() - 1).add(inNeighbors.size() - 2);
-            }
-            i += MAX_NODE_SIZE;
-        }
-
-         */
-        if (!splitNodesMap.containsKey(node.getId()))
-            splitNodesMap.put(node.getId(), new ArrayList<>());
-        splitNodesMap.get(node.getId()).add(nodeIndexInGraphSequence.size());
+        //some nodes start from 0, some from 1 - map normalizes it
+        nodesMap.put(node.id, getNumberOfNodesInGraph());
         nodeIndexInGraphSequence.add(graphSequence.size());
         inNeighbors.add(new ArrayList<>());
         outNeighbors.add(new ArrayList<>());
-        reverse.add(node.isReversed());
-
         for (char c : node.sequence.toCharArray()) {
             graphSequence.add(c);
         }
     }
 
 
+    /**
+     * Creates edges for normal and reverse-complement graph. Adds edges to inNeighbors and outNeighbors.
+     * @param line
+     */
     public void createAndAddEdges(String line) {
         String[] arr = line.split("\t");
         int from_node_original_id = Integer.parseInt(arr[1]);
@@ -94,6 +66,7 @@ public class Graph {
         int to_node_original_id = Integer.parseInt(arr[3]);
         String to_sign = arr[4];
         int from_normal, from_reverse, to_normal, to_reverse;
+
         if (from_sign.equals("+")) {
             from_normal = from_node_original_id * 2;
             from_reverse = from_node_original_id * 2 + 1;
@@ -109,13 +82,10 @@ public class Graph {
             to_reverse = to_node_original_id * 2;
         }
 
-        //dodaj prvi čvor - za normalni graf - (from_normal, to_normal)
-        //zadnji splitani cvor s tim id-om
-        int from_node = this.splitNodesMap.get(from_normal).get(splitNodesMap.get(from_normal).size() - 1);
-        //prvi splitani cvor s tim id-om
-        int to_node = this.splitNodesMap.get(to_normal).get(0);
+        int from_node = nodesMap.get(from_normal);
+        int to_node = nodesMap.get(to_normal);
 
-        //dodijeljivanje susjeda cvorovima
+
         if (!this.inNeighbors.get(to_node).contains(from_node)) {
             this.inNeighbors.get(to_node).add(from_node);
         }
@@ -123,13 +93,11 @@ public class Graph {
             this.outNeighbors.get(from_node).add(to_node);
         }
 
-        //dodaj drugi čvor - za obrnuti komplementarni graf - (to_reverse, from_reverse)
-        //zadnji splitani cvor s tim id-om
-        from_node = this.splitNodesMap.get(to_reverse).get(splitNodesMap.get(to_reverse).size() - 1);
-        //prvi splitani cvor s tim id-om
-        to_node = this.splitNodesMap.get(from_reverse).get(0);
 
-        //dodijeljivanje susjeda cvorovima
+        from_node = nodesMap.get(to_reverse);
+        to_node = nodesMap.get(from_reverse);
+
+
         if (!this.inNeighbors.get(to_node).contains(from_node)) {
             this.inNeighbors.get(to_node).add(from_node);
         }
@@ -138,78 +106,13 @@ public class Graph {
         }
     }
 
-    public void summary() {
-        System.out.println(splitNodesMap.size() + " original nodes");
-        System.out.println(graphSequence.size() + " length of graph sequence");
-        System.out.println(nodeIndexInGraphSequence.size() + "split nodes");
-        int special_nodes = 0, edges = 0;
-        for (int i = 0; i < inNeighbors.size(); i++) {
-            if (inNeighbors.get(i).size() >= 2) {
-                special_nodes += 1;
-            }
-            edges += inNeighbors.get(i).size();
-        }
-        System.out.println(edges+" edges");
-        System.out.println(special_nodes+" nodes with in-degree >= 2");
-    }
-
-    public List<List<Integer>> topologicalOrderOfComponents() {
-        List<Integer> index = new ArrayList<>(Collections.nCopies(nodeIndexInGraphSequence.size(), -1));
-        List<Integer> lowlink = new ArrayList<>(Collections.nCopies(nodeIndexInGraphSequence.size(), -1));
-        List<Boolean> onStack = new ArrayList<>(Collections.nCopies(nodeIndexInGraphSequence.size(), false));
-        Stack<Integer> S = new Stack<>();
-        indexnum = 0;
-        List<List<Integer>> result = new ArrayList<>();
-        for(int i = 0; i < nodeIndexInGraphSequence.size(); i++) {
-            //if (index.get(i) == -1)
-                //connect(i, result, index, lowlink, onStack, S);
-        }
-        Collections.reverse(result);
-
-        assert(result.size() > 0);
-        assert(result.get(0).size() > 0);
-        assert(result.get(result.size()-1).size() > 0);
-        return result;
-    }
-
-    public void connect(int node, List<List<Integer>> result, List<Integer> index,
-                        List<Integer> lowlink, List<Boolean> onStack, Stack<Integer> S) {
-        index.set(node, indexnum);
-        lowlink.set(node, indexnum);
-        indexnum++;
-        S.add(node);
-        onStack.set(node, true);
-        System.out.println("node="+node);
-        for (int neighbor : outNeighbors.get(node)) {
-            if (index.get(neighbor) == -1) {
-                connect(neighbor, result, index, lowlink, onStack, S);
-                lowlink.set(node, Math.min(lowlink.get(neighbor), lowlink.get(node)));
-            } else if (onStack.get(neighbor)) {
-                lowlink.set(node, Math.min(lowlink.get(node), index.get(neighbor)));
-            }
-        }
-        if(lowlink.get(node).equals(index.get(node))) {
-            result.add(new ArrayList<>());
-            int i = 0;
-            while(true) {
-                int w = S.pop();
-                onStack.set(w, false);
-                result.get(result.size()-1).add(w);
-                if (w == node)
-                    break;
-                else
-                    i++;
-            }
-        }
-
-
-    }
 
     /**
-     * Kahn's algorithm (1962.)
-     * @return
+     * Kahn’s algorithm for Topological Sorting (1962.)
+     * @return topological order of nodes in graph if the graph is acyclic else throws error
+     * @throws GraphCycleException
      */
-    public List<Integer> topologicalOrderOfNodes() {
+    public List<Integer> topologicalOrderOfNodesAcyclic() throws GraphCycleException {
         //Empty list that will contain the sorted elements
         List<Integer> L = new ArrayList<>();
         // Set of all nodes with no incoming edge
@@ -217,17 +120,14 @@ public class Graph {
         List<List<Integer>> inNeighborsCopy = Utility.copyNeighbors(inNeighbors);
         List<List<Integer>> outNeighborsCopy = Utility.copyNeighbors(outNeighbors);
         //find nodes with no incoming edge
-        for(int i = 0; i < inNeighbors.size(); i++) {
-            if(inNeighbors.get(i).size() == 0)
+        for (int i = 0; i < inNeighbors.size(); i++) {
+            if (inNeighbors.get(i).size() == 0)
                 S.add(i);
         }
-
-        while(!S.isEmpty()) {
+        while (!S.isEmpty()) {
             int n = S.get(0);
             S.remove(0);
             L.add(n);
-            List<Integer> inNeighborsToRemove = new ArrayList<>();
-            List<Integer> outNeighborsToRemove = new ArrayList<>();
             for (int m : outNeighbors.get(n)) {
                 outNeighborsCopy.get(n).remove(Integer.valueOf(m));
                 inNeighborsCopy.get(m).remove(Integer.valueOf(n));
@@ -239,10 +139,52 @@ public class Graph {
         for (List<Integer> neighbors : inNeighborsCopy) {
             if (!neighbors.isEmpty()) {
                 //(graph has at least one cycle)
-                hasCycle = true;
+                throw new GraphCycleException();
             }
         }
         //(a topologically sorted order)
         return L;
+    }
+
+    /**
+     * https://www.geeksforgeeks.org/topological-sorting/
+     *
+     * Time Complexity: O(V+E).
+     * The above algorithm is simply DFS with an extra stack. So time complexity is the same as DFS.
+     * Auxiliary space: O(V).
+     * The extra space is needed for the stack.
+     * @return topological order of nodes in graph
+     */
+    public List<Integer> topologicalOrderOfNodesCyclic() {
+        List<Integer> stack;
+        // Mark all the vertices as not visited
+        List<Boolean> visited;
+        stack = new ArrayList<>();
+        // Mark all the vertices as not visited
+        visited = new ArrayList<>(Collections.nCopies(getNumberOfNodesInGraph(), false));
+
+        for (int i = 0; i < getNumberOfNodesInGraph(); i++) {
+            if (!visited.get(i))
+                topologicalSortUtil(i, stack, visited);
+        }
+
+        Collections.reverse(stack);
+        return stack;
+    }
+
+    /**
+     * Util function for topologicalOrderOfNodesCyclic
+     * @param v
+     * @param stack
+     * @param visited
+     */
+    public void topologicalSortUtil(int v, List<Integer> stack, List<Boolean> visited) {
+        visited.set(v, true);
+        List<Integer> neighbors = outNeighbors.get(v);
+        for (int i = 0; i < neighbors.size(); i++) {
+            if (!visited.get(neighbors.get(i)))
+                topologicalSortUtil(neighbors.get(i), stack, visited);
+        }
+        stack.add(v);
     }
 }
