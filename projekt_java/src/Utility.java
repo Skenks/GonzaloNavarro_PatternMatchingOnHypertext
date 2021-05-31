@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Contains utility functions.
+ */
 public class Utility {
 
     /**
@@ -172,7 +175,7 @@ public class Utility {
     public static double add_bit_parallel_times(String[] graphNames) {
         double sum =  0.0;
         for (String graphName : graphNames) {
-            sum += loadTime(Path.of("bit_parallel_times/" + graphName.substring(0, graphName.length()-3) + "txt"));
+            sum += loadTime(Path.of("../bit_parallel_times/" + graphName.substring(0, graphName.length()-3) + "txt"));
         }
         return sum/1000000;
     }

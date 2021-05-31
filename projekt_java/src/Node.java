@@ -1,4 +1,8 @@
+/**
+ * Represents a node in graph.
+ */
 public class Node {
+
     int id;
     boolean reversed;
     String sequence;

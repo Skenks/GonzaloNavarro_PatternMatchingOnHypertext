@@ -1,12 +1,42 @@
 import java.util.*;
 
+/**
+ * Graph that stores nodes and edges.
+ */
 public class Graph {
 
+    /**
+     * Represents overlap from .gfa file which is important when we are creating nodes.
+     * If overlap is 10, then we are removing 10 last characters from node sequence.
+     */
     int overlap;
+
+    /**
+     * sequence that stores chars of all nodes in graph
+     */
     List<Character> graphSequence = new ArrayList<>();
+
+    /**
+     * map that normalizes nodes - if nodes start from 0 or 1 or other we will be able to save them
+     * in nodeIndexInGraphSequence from first index - 0
+     */
     Map<Integer, Integer> nodesMap = new HashMap<>();
+
+    /**
+     * stores index of every node start in graph sequence.
+     * Example: if second node from graph file starts at index 100 in graphSequence then
+     * nodeIndexInGraphSequence.get(1) returns 100
+     */
     List<Integer> nodeIndexInGraphSequence = new ArrayList<>();
+
+    /**
+     * For every node(n1) in graph stores stores list of nodes(nx, ...) for whom there is edge e that goes from nx to n1
+     */
     List<List<Integer>> inNeighbors = new ArrayList<>();
+
+    /**
+     * For every node(n1) in graph stores stores list of nodes(n2, ...) for whom there is edge e that goes from n1 to nx
+     */
     List<List<Integer>> outNeighbors = new ArrayList<>();
 
     /**

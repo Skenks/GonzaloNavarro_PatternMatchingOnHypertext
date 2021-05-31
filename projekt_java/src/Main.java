@@ -5,10 +5,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Loads graphs and fastqs, for each graph starts aligner, measures time and memory, compares results to bit parallel
+ * results, writes results to summary.txt
+ */
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter("summary.txt", true));
+        BufferedWriter writer = new BufferedWriter(new FileWriter("../summary.txt", true));
         String[] graphNames = {"ref10000_linear.gfa", "ref10000_snp.gfa", "ref10000_tangle.gfa",
                 "ref10000_twopath.gfa"};
         String fastqName = "ref10000_simulatedreads.fastq";
@@ -36,16 +40,23 @@ public class Main {
         writer.close();
     }
 
+    /**
+     * Starts aligner for one graph, measures time and memory usage, compares it to bit parallel and writes
+     * results into summary.txt
+     * @param graphName name of file that contains graph
+     * @param fastqName name of file that contains fastqs
+     * @param writer writer that writes results into summary.txt
+     */
     public static void run_for_one_graph(String graphName, String fastqName, BufferedWriter writer) {
 
         long startTime = System.nanoTime();
 
         String bit_parallel_file = graphName.substring(0, graphName.length() - 3) + "txt";
-        Path bit_parallel_scores_file = Path.of("bit_parallel_scores/" + bit_parallel_file);
-        Path bit_parallel_time_file = Path.of("bit_parallel_times/" + bit_parallel_file);
-        Path bit_parallel_memory_file = Path.of("bit_parallel_memory_usage/" + bit_parallel_file);
-        Graph graph = Utility.readGraph(Path.of("graphs/" + graphName));
-        List<String> fastqs = Utility.readFastq(Path.of("graphs/" + fastqName));
+        Path bit_parallel_scores_file = Path.of("../bit_parallel_scores/" + bit_parallel_file);
+        Path bit_parallel_time_file = Path.of("../bit_parallel_times/" + bit_parallel_file);
+        Path bit_parallel_memory_file = Path.of("../bit_parallel_memory_usage/" + bit_parallel_file);
+        Graph graph = Utility.readGraph(Path.of("../graphs/" + graphName));
+        List<String> fastqs = Utility.readFastq(Path.of("../graphs/" + fastqName));
         List<Integer> bit_parallel_scores = Utility.loadScores(bit_parallel_scores_file);
         int bit_parallel_time = Utility.loadTime(bit_parallel_time_file);
         int bit_parallel_memory_usage = Utility.loadMemory(bit_parallel_memory_file);

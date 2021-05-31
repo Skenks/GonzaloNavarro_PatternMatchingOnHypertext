@@ -2,9 +2,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Implements Navarros algorithm.
+ */
 public class Aligner {
 
     Graph graph;
+
+    /**
+     * List that containes node indexes in topological order
+     */
     List<Integer> topologicalOrder;
 
     public Aligner(Graph graph, List<Integer> topologicalOrder) {
