@@ -177,6 +177,16 @@ public class Utility {
         return sum/1000000;
     }
 
+    public static int loadMemory(Path filePath) {
+        try {
+            List<String> lines = Files.readAllLines(filePath);
+            return Integer.parseInt(lines.get(0).trim());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
     /**
      * Copies List<List<Integer>> and returns copy.
      * @param neighbors

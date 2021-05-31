@@ -1,11 +1,9 @@
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
 
@@ -22,19 +20,19 @@ public class Main {
         long endTime = System.nanoTime();
 
         double total_bit_parallel_time_in_seconds = Utility.add_bit_parallel_times(graphNames);
-        double our_total_time = (endTime-startTime)/1000000000;
-        double ratio = our_total_time/total_bit_parallel_time_in_seconds;
+        double our_total_time = (double)(endTime - startTime) / 1000000000;
+        double ratio = our_total_time / total_bit_parallel_time_in_seconds;
 
         System.out.println("Total:");
         System.out.println("bit-parallel took: " + total_bit_parallel_time_in_seconds + "s");
         System.out.println("Navarro implementation took: " + our_total_time + "s");
-        System.out.println("ratio: " + ratio);
+        System.out.println("time ratio: " + ratio);
         System.out.println();
 
         writer.append("Total:\n");
-        writer.append( "bit-parallel took " + total_bit_parallel_time_in_seconds + " s\n");
-        writer.append("Navarro took " + (endTime-startTime)/1000000000 + " s\n");
-        writer.append("ratio: " +  ratio + "\n");
+        writer.append("bit-parallel took " + total_bit_parallel_time_in_seconds + " s\n");
+        writer.append("Navarro took " + (endTime - startTime) / 1000000000 + " s\n");
+        writer.append("time ratio: " + ratio + "\n");
         writer.close();
     }
 
@@ -42,13 +40,15 @@ public class Main {
 
         long startTime = System.nanoTime();
 
-        String bit_parallel_file = graphName.substring(0, graphName.length()-3) + "txt";
+        String bit_parallel_file = graphName.substring(0, graphName.length() - 3) + "txt";
         Path bit_parallel_scores_file = Path.of("bit_parallel_scores/" + bit_parallel_file);
         Path bit_parallel_time_file = Path.of("bit_parallel_times/" + bit_parallel_file);
-        Graph graph = Utility.readGraph(Path.of("graphs/"+graphName));
-        List<String> fastqs = Utility.readFastq(Path.of("graphs/"+fastqName));
+        Path bit_parallel_memory_file = Path.of("bit_parallel_memory_usage/" + bit_parallel_file);
+        Graph graph = Utility.readGraph(Path.of("graphs/" + graphName));
+        List<String> fastqs = Utility.readFastq(Path.of("graphs/" + fastqName));
         List<Integer> bit_parallel_scores = Utility.loadScores(bit_parallel_scores_file);
         int bit_parallel_time = Utility.loadTime(bit_parallel_time_file);
+        int bit_parallel_memory_usage = Utility.loadMemory(bit_parallel_memory_file);
 
         boolean hasCycle = false;
         List<Integer> topologicalOrder = null;
@@ -83,24 +83,32 @@ public class Main {
         }
 
         System.out.println("graph file: " + graphName);
-        System.out.println("score: " + correct+"/"+scores.size());
+        System.out.println("score: " + correct + "/" + scores.size());
         double bit_parallel_time_in_seconds = bit_parallel_time / 1000000.0;
         double our_time_in_seconds = (endTime - startTime) / 1000000000.0;
-        double ratio = our_time_in_seconds/bit_parallel_time_in_seconds;
-        System.out.println("bit-parallel took: " + bit_parallel_time_in_seconds + "s");
+        double time_ratio = our_time_in_seconds / bit_parallel_time_in_seconds;
+        double bit_parallel_memory_usage_in_kb = bit_parallel_memory_usage / 1024;
+        double navarro_usage_in_kb = (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
+        double memory_ratio = navarro_usage_in_kb / bit_parallel_memory_usage_in_kb;
+        System.out.println("bit parallel took: " + bit_parallel_time_in_seconds + "s");
         System.out.println("Navarro implementation took: " + our_time_in_seconds + "s");
-        System.out.println("ratio: " + ratio);
+        System.out.println("time ratio: " + time_ratio);
+        System.out.println("bit parallel memory usage: " + bit_parallel_memory_usage / 1024 + "KB");
+        System.out.println("Navarro memory usage: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 + "KB");
+        System.out.println("memory ratio: " + memory_ratio);
         System.out.println();
         try {
-            writer.append( graphName + ":\n");
-            writer.append( "score: " + correct + "/" + scores.size() + "\n");
-            writer.append( "bit-parallel took " + bit_parallel_time_in_seconds + " s\n");
+            writer.append(graphName + ":\n");
+            writer.append("score: " + correct + "/" + scores.size() + "\n");
+            writer.append("bit parallel took " + bit_parallel_time_in_seconds + " s\n");
             writer.append("Navarro took " + our_time_in_seconds + " s\n");
-            writer.append("ratio: " +  ratio + "\n");
+            writer.append("time ratio: " + time_ratio+ "\n");
+            writer.append("bit parallel memory usage: " + (double) bit_parallel_memory_usage / 1024 + "KB\n");
+            writer.append("Navarro memory usage: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 + "KB\n");
+            writer.append("memory ratio: " + memory_ratio + "\n\n");
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 }

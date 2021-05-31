@@ -1,24 +1,40 @@
 ref10000_linear.gfa:
 score: 77/77
-bit-parallel took 3.178592 s
-Navarro took 106.0164537 s
-ratio: 33.3532751922864
+bit parallel took 3.178592 s
+Navarro took 57.561182995 s
+time ratio: 18.109019023202727
+bit parallel memory usage: 1844.984375KB
+Navarro memory usage: 68590.53125KB
+memory ratio: 36.6402013286334
+
 ref10000_snp.gfa:
 score: 77/77
-bit-parallel took 6.060904 s
-Navarro took 172.7205961 s
-ratio: 28.497497419526855
+bit parallel took 6.060904 s
+Navarro took 137.952698484 s
+time ratio: 22.761076315348337
+bit parallel memory usage: 4191.484375KB
+Navarro memory usage: 140389.78125KB
+memory ratio: 33.49791964924839
+
 ref10000_tangle.gfa:
 score: 77/77
-bit-parallel took 32.87267 s
-Navarro took 95.7473231 s
-ratio: 2.9126725361827925
+bit parallel took 32.87267 s
+Navarro took 99.201972617 s
+time ratio: 3.0177643804716805
+bit parallel memory usage: 1992.71875KB
+Navarro memory usage: 60230.0390625KB
+memory ratio: 30.235963384789155
+
 ref10000_twopath.gfa:
 score: 77/77
-bit-parallel took 52.625007 s
-Navarro took 909.4605783 s
-ratio: 17.28190892782209
+bit parallel took 52.625007 s
+Navarro took 996.097267554 s
+time ratio: 18.928211592522924
+bit parallel memory usage: 18413.125KB
+Navarro memory usage: 136660.703125KB
+memory ratio: 7.421968344376256
+
 Total:
 bit-parallel took 94.737173 s
-Navarro took 1283 s
-ratio: 13.542730476029721
+Navarro took 1290.813125 s
+time ratio: 13.616619106842043

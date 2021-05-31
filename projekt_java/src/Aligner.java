@@ -18,14 +18,18 @@ public class Aligner {
      * @return smallest edit distance
      */
     public int align(String pattern) {
+        //Cv
         List<Integer> realEditDistances = new ArrayList<>(Collections.nCopies(graph.graphSequence.size(), 0));
+        //C'v
         List<Integer> iterationEditDistances = new ArrayList<>(Collections.nCopies(graph.graphSequence.size(), 0));
 
+        //initialize lists of edit distances
         for (int j = 0; j < realEditDistances.size(); j++) {
             char char_in_graph = graph.graphSequence.get(j);
             realEditDistances.set(j, pattern.charAt(0) == char_in_graph ? 0 : 1);
             iterationEditDistances.set(j, pattern.charAt(0) == char_in_graph ? 0 : 1);
         }
+
 
         for (int j = 1; j < pattern.length(); j++) {
             //for every node in graph
